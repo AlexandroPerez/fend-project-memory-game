@@ -107,3 +107,33 @@ h1 {
     float: right;
     cursor: pointer;
 }
+
+#timer {
+  font-family: 'Courier New', Courier, monospace;
+  float: right;
+  margin-left: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+.modal {
+  position: fixed;
+  background-color: #2b2c3ca1;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 25px;
+  border-radius: 25px;
+  box-shadow: 3px 3px 10px;
+}
