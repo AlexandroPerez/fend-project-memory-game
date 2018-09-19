@@ -180,6 +180,8 @@ function resetGame() {
   resetTimer();
   resetMoves();
   resetRating();
+  matches = 0;
+  mismatches = 0;
   cards = shuffle(cards);
   deck.innerHTML = '';
   cards.forEach(card => {
@@ -190,7 +192,7 @@ function resetGame() {
 function startTimer() {
   seconds = 0;
 
-  setTime = function() {
+  const setTime = function() {
     ++seconds;
     if (seconds > 3600) {
       // TODO: player looses if 1 hour has passed
@@ -250,7 +252,6 @@ function setRating() {
  * Reset rating to 3 stars, and clear mismatches.
  */
 function resetRating() {
-  mismatches = 0;
   rating = 3;
   ratingLabel.innerHTML = "";
   for (let i = 3; i > 0; i--) {
