@@ -39,14 +39,17 @@
         </ul>
     </div>
 
-    <div class="modal hidden">
+    <div id="modal" class="modal hidden">
       <div class="message">
           <h2>Congratulations! You Win!</h2>
-          <ul>
-            <li>time: 3min</li>
-            <li>Rating: stars</li>
-            <li>Play again</li>
-          </ul>
+          <h3>Your Score:</h3>
+          <p>
+            Total Time: <span id="total-time"></span><br>
+            Final Rating: <span id="final-rating"></span>
+          </p>
+          <p>
+            <button id="play-again">Play Again</button>
+          </p>
       </div>
     </div>
 

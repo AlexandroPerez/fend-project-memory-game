@@ -18,27 +18,41 @@ cards = shuffle(cards);
  * Set Game variables
  */
 var moves = 0;
+var rating = 3;
 var mismatches = 0; // keep track of missmatched cards to decrease rating
+var matches = 0; // keep track of matches, so when 8 are done, player wins.
 var seconds = null; // if null, timer hasn't been started
 var timer = null; // use to save the interval id
 
 /**
- * Set Game labels
+ * Set Game UI elements
  */
+var restart = document.getElementById('restart');
 var minutesLabel = document.getElementById('minutes');
 var secondsLabel = document.getElementById('seconds');
 var movesLabel = document.getElementById('moves');
 var ratingLabel = document.getElementById('rating');
+var modal = document.getElementById('modal');
+var modalMessage = document.querySelector('#modal .message');
+var totalTime = document.getElementById('total-time');
+var finalRating = document.getElementById('final-rating');
+var playAgainBtn = document.getElementById('play-again');
 
-/*
- * Display the cards on the page
+/**
+ * Display deck of cards on the page, adding onclick listeners to each one.
 */
 var deck = document.getElementById('deck');
 cards.forEach(card => {
   deck.appendChild(createCardHTML(card));
 });
 
-
+/**
+ * add onclick listeners to remaining UI elements
+ */
+playAgainBtn.onclick = newGame;
+modal.onclick = hideModal;
+modalMessage.onclick = function(e) { e.stopPropagation(); };
+restart.onclick = resetGame;
 
 function createCardHTML(symbol) {
   const li = document.createElement('li');
@@ -71,46 +85,67 @@ function shuffle(array) {
 }
 
 function handleClick() {
+  // start the timer if the player started the game (by clicking the first card)
   if (seconds === null) startTimer();
 
-  // if any other card is already being displayed, get it.
+  // if any other card is already being displayed, get it. 
+  // (this will be null, if no other cards are being displayed)
   const secondCard = document.querySelector('li.card.open.show');
 
-  // show the current card
+  // show the current card, and remove onclick listener
   this.classList.add('show', 'open');
+  this.onclick = null;
 
-  // if a second card is being shown, check if they match
+  // if a second card is being shown, check if it matches the current one (null value means false)
   if (secondCard) {
-    // prevent a third card or more from being shown.
-    // Restore clicks after hiding cards, or finding a match
-    preventClicks();
+    // prevent further cards from being shown, when clicked
+    // (only two cards are shown at a time)
+    preventFurtherClicks();
 
     // regardless of a match, increase move
     addMove();
 
+    // get the symbol value of both cards
     const firstSymbol = secondCard.firstChild.classList.value;
     const secondSymbol = this.firstChild.classList.value;
+
+    // if cards match
     if (firstSymbol === secondSymbol) {
-      console.log("match!");
+      // increase matched number
+      matches++;
+
+      // toggle card classes as needed
       this.classList.remove('show', 'open');
       this.classList.add('match');
-      this.onclick = null;
-
-      secondCard.classList.remove('show', 'open')
+      secondCard.classList.remove('show', 'open');
       secondCard.classList.add('match');
-      secondCard.onclick = null;
+
+      // if all 8 possible matches have been found, player wins.
+      if (matches === 8 ) {
+        playerWins();
+        return;
+      }
+
+      // restore clicks on hidden cards.
       restoreClicks();
+
+    // if cards didn't match
     } else {
+      // increase number of mismatches, which alter rating
       mismatches++;
+
+      // hide both open cards
       hideCards();
+
+      // alter rating after a mismatch
       setRating();
     }
-  } else {
-    // remove onclick function of currently shown card
-    this.onclick = null;
   }
 }
 
+/**
+ * Hide pair of mismatched cards after 1 second.
+ */
 function hideCards() {
   setTimeout(function() {
     const cards = document.querySelectorAll('.open.show');
@@ -121,15 +156,19 @@ function hideCards() {
   }, 1000);
 }
 
-function preventClicks() {
-  // get all hidden cards only
+/**
+ * Remove onclick listener on all hidden cards
+ */
+function preventFurtherClicks() {
   const cards = document.querySelectorAll('.card:not(.match)');
   cards.forEach(card => {
-    // prevent clicks
     card.onclick = null;
   });
 }
 
+/**
+ * Restore onclick listeners on all hidden cards
+ */
 function restoreClicks() {
   const cards = document.querySelectorAll('.card:not(.match)');
   cards.forEach(card => {
@@ -137,16 +176,10 @@ function restoreClicks() {
   });
 }
 
-/**
- * Restart Button
- */
-
-const restart = document.getElementById('restart');
-restart.onclick = resetGame;
-
 function resetGame() {
   resetTimer();
   resetMoves();
+  resetRating();
   cards = shuffle(cards);
   deck.innerHTML = '';
   cards.forEach(card => {
@@ -186,6 +219,9 @@ function resetTimer() {
   startTimer;
 }
 
+/**
+ * Increase number of moves. Should be used every time a pair of cards is shown for a possible match.
+ */
 function addMove() {
   moves++;
   movesLabel.innerText = moves;
@@ -196,19 +232,60 @@ function resetMoves() {
   movesLabel.innerHTML = moves;
 }
 
+/**
+ * Set rating based on current mismatches. Rating won't go below one star.
+ */
 function setRating() {
   // make sure rating doesn't go below 1 star
   if (mismatches > 7) return;
 
-  // degrease rating every 3 mismatches
+  // decrease rating every 3 mismatches
   if ( (mismatches % 3) === 0 ) {
-    console.log(mismatches);
+    rating--;
     ratingLabel.removeChild(ratingLabel.lastElementChild);
   }
 }
 
-function playerWins() {
+/**
+ * Reset rating to 3 stars, and clear mismatches.
+ */
+function resetRating() {
+  mismatches = 0;
+  rating = 3;
+  ratingLabel.innerHTML = "";
+  for (let i = 3; i > 0; i--) {
+    const i = document.createElement('i');
+    i.classList.add('fa', 'fa-star');
+    ratingLabel.appendChild(i);
+  }
+}
 
+function playerWins() {
+  // stop timer
+  stopTimer();
+
+  // show modal
+  modal.classList.remove('hidden');
+
+  // show final time
+  totalTime.innerText = `${minutesLabel.innerText}:${secondsLabel.innerText}`;
+
+  // show final rating as stars
+  finalRating.innerHTML = "";
+  for (let i = rating; i > 0; i--) {
+    const i = document.createElement('i');
+    i.classList.add('fa', 'fa-star');
+    finalRating.appendChild(i);
+  }
+}
+
+function newGame() {
+  resetGame();
+  modal.classList.add('hidden');
+}
+
+function hideModal() {
+  modal.classList.add('hidden');
 }
 /*
  * set up the event listener for a card. If a card is clicked:
